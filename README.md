@@ -6,7 +6,7 @@
 рекомендательный движок (Content-Based + Collaborative SVD + кластеризация +
 контекст + Time Decay).
 
-[![CI](https://github.com/<your-org>/unified-recsys/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml)
+[![CI](https://github.com/malaletin/unified-recsys/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml)
 ![python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
