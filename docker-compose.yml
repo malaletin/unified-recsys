@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: recsys_db
+    environment:
+      POSTGRES_USER: recsys
+      POSTGRES_PASSWORD: recsys
+      POSTGRES_DB: recsys
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recsys"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    container_name: recsys_api
+    environment:
+      DATABASE_URL: postgresql+psycopg://recsys:recsys@db:5432/recsys
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Batch-планировщик пересчёта профилей (cron/Celery-эмуляция).
+  scheduler:
+    build: .
+    container_name: recsys_scheduler
+    command: ["python", "-m", "batch.scheduler"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://recsys:recsys@db:5432/recsys
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
