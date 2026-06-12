@@ -11,3 +11,9 @@ dev.db
 results/*.png
 results/*.json
 .DS_Store
+
+# Trivago data and batches
+data/trivago/
+data/trivago_sample/
+parts/
+*.pkl
