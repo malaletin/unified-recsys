@@ -69,7 +69,7 @@ def main():
                 X, y, groups = self.fb.build_training(clickouts)
                 from lightgbm import LGBMRanker
                 self.model = LGBMRanker(**self.params)
-                self.model.fit(X[:, keep_idx], y, group=groups, feature_name=keep)
+                self.model.fit(X[:, keep_idx], y, group=groups)
                 self._keep_idx = keep_idx
                 return self
 

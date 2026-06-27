@@ -40,7 +40,9 @@ class LightGBMRanker:
         self.fb = FeatureBuilder(metadata).fit(clickouts)
         X, y, groups = self.fb.build_training(clickouts)
         self.model = LGBMRanker(**self.params)
-        self.model.fit(X, y, group=groups, feature_name=FEATURE_NAMES)
+        # без feature_name: на инференсе подаём numpy-массив, имена не нужны
+        # (важности признаков сопоставляются с FEATURE_NAMES вручную ниже)
+        self.model.fit(X, y, group=groups)
         return self
 
     def rank(self, inst):
