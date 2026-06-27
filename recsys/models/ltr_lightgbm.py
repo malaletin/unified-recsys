@@ -25,12 +25,16 @@ except Exception:  # pragma: no cover
 class LightGBMRanker:
     name = "LightGBM-LTR"
 
-    def __init__(self, params: dict | None = None, num_boost_round: int = 300):
+    def __init__(self, params: dict | None = None, num_boost_round: int = 300,
+                 drop: list | None = None):
         self.params = params or dict(
             objective="lambdarank", metric="ndcg", n_estimators=num_boost_round,
             learning_rate=0.05, num_leaves=63, min_child_samples=50,
             subsample=0.8, colsample_bytree=0.8, random_state=42, n_jobs=-1,
         )
+        self.drop = drop or []                       # имена исключаемых признаков
+        self.keep_names = [f for f in FEATURE_NAMES if f not in self.drop]
+        self.keep_idx = [FEATURE_NAMES.index(f) for f in self.keep_names]
         self.model = None
         self.fb: FeatureBuilder | None = None
 
@@ -41,12 +45,11 @@ class LightGBMRanker:
         X, y, groups = self.fb.build_training(clickouts)
         self.model = LGBMRanker(**self.params)
         # без feature_name: на инференсе подаём numpy-массив, имена не нужны
-        # (важности признаков сопоставляются с FEATURE_NAMES вручную ниже)
-        self.model.fit(X, y, group=groups)
+        self.model.fit(X[:, self.keep_idx], y, group=groups)
         return self
 
     def rank(self, inst):
-        feats = self.fb.transform_instance(inst)
+        feats = self.fb.transform_instance(inst)[:, self.keep_idx]
         scores = self.model.predict(feats)
         return stable_order(inst.impressions, scores)
 
@@ -54,4 +57,4 @@ class LightGBMRanker:
         if self.model is None:
             return {}
         imp = self.model.feature_importances_
-        return dict(sorted(zip(FEATURE_NAMES, imp.tolist()), key=lambda t: -t[1]))
+        return dict(sorted(zip(self.keep_names, imp.tolist()), key=lambda t: -t[1]))

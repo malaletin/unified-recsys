@@ -25,15 +25,18 @@ RESULTS = Path(__file__).resolve().parent.parent / "results"
 RESULTS.mkdir(exist_ok=True)
 
 
-def build_models(epochs: int, only: set | None = None, ltr_params: dict | None = None):
+def build_models(epochs: int, only: set | None = None, ltr_params: dict | None = None,
+                 ltr_drop: list | None = None):
     models = list(all_baselines())
 
     from recsys.models.ltr_lightgbm import LIGHTGBM_AVAILABLE, LightGBMRanker
     if LIGHTGBM_AVAILABLE:
-        ltr = LightGBMRanker()
+        ltr = LightGBMRanker(drop=ltr_drop)
         if ltr_params:
             ltr.params.update(ltr_params)          # подобранные Optuna гиперпараметры
             print(f"[ltr] применены настроенные гиперпараметры: {ltr_params}")
+        if ltr_drop:
+            print(f"[ltr] исключены признаки: {ltr_drop}")
         models.append(ltr)
     else:
         print("[skip] LightGBM не установлен (pip install lightgbm)")
@@ -68,6 +71,8 @@ def main():
                     help="ограничить набор моделей по именам (напр. ContentSim LightGBM-LTR SASRec)")
     ap.add_argument("--ltr-params", default=None,
                     help="путь к results/ltr_best_params.json — применить подобранные гиперпараметры LightGBM")
+    ap.add_argument("--ltr-drop", nargs="*", default=None,
+                    help="исключить признаки из LightGBM (напр. pop_log pop_impr_log)")
     args = ap.parse_args()
 
     ltr_params = None
@@ -83,7 +88,7 @@ def main():
           f"items={len(data.metadata.item_ids)}")
 
     models = build_models(args.epochs, only=set(args.models) if args.models else None,
-                          ltr_params=ltr_params)
+                          ltr_params=ltr_params, ltr_drop=args.ltr_drop)
     print(f"\nМоделей к сравнению: {[getattr(m, 'name', type(m).__name__) for m in models]}\n")
     rows = evaluate_all(models, train, test, metadata=data.metadata)
 
