@@ -1,0 +1,18 @@
+# Зависимости Трека 3 (продвинутые модели).
+# PyTorch с CUDA ставится ОТДЕЛЬНОЙ командой — см. docs/track3_windows.md:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124
+
+numpy>=1.24
+pandas>=2.0
+scikit-learn>=1.3
+
+# Learning-to-Rank
+lightgbm>=4.0
+
+# Матричная факторизация (BPR-MF, ALS)
+implicit>=0.7
+scipy>=1.10
+
+# Подбор гиперпараметров
+optuna>=3.4
+tqdm>=4.66
