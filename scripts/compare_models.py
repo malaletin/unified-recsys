@@ -25,12 +25,16 @@ RESULTS = Path(__file__).resolve().parent.parent / "results"
 RESULTS.mkdir(exist_ok=True)
 
 
-def build_models(epochs: int, only: set | None = None):
+def build_models(epochs: int, only: set | None = None, ltr_params: dict | None = None):
     models = list(all_baselines())
 
     from recsys.models.ltr_lightgbm import LIGHTGBM_AVAILABLE, LightGBMRanker
     if LIGHTGBM_AVAILABLE:
-        models.append(LightGBMRanker())
+        ltr = LightGBMRanker()
+        if ltr_params:
+            ltr.params.update(ltr_params)          # подобранные Optuna гиперпараметры
+            print(f"[ltr] применены настроенные гиперпараметры: {ltr_params}")
+        models.append(ltr)
     else:
         print("[skip] LightGBM не установлен (pip install lightgbm)")
 
@@ -62,7 +66,13 @@ def main():
     ap.add_argument("--test-frac", type=float, default=0.2)
     ap.add_argument("--models", nargs="*", default=None,
                     help="ограничить набор моделей по именам (напр. ContentSim LightGBM-LTR SASRec)")
+    ap.add_argument("--ltr-params", default=None,
+                    help="путь к results/ltr_best_params.json — применить подобранные гиперпараметры LightGBM")
     args = ap.parse_args()
+
+    ltr_params = None
+    if args.ltr_params and Path(args.ltr_params).exists():
+        ltr_params = json.loads(Path(args.ltr_params).read_text()).get("params")
 
     t0 = time.time()
     print(f"Загрузка {args.data} (stream={args.stream}) ...")
@@ -72,7 +82,8 @@ def main():
     print(f"clickouts={len(data.clickouts)}  train={len(train)}  test={len(test)}  "
           f"items={len(data.metadata.item_ids)}")
 
-    models = build_models(args.epochs, only=set(args.models) if args.models else None)
+    models = build_models(args.epochs, only=set(args.models) if args.models else None,
+                          ltr_params=ltr_params)
     print(f"\nМоделей к сравнению: {[getattr(m, 'name', type(m).__name__) for m in models]}\n")
     rows = evaluate_all(models, train, test, metadata=data.metadata)
 
