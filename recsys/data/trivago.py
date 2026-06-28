@@ -183,11 +183,12 @@ class TrivagoData:
     clickouts: list[ClickoutInstance]
 
 
-# колонки, реально нужные конвейеру (экономит память на больших данных)
+# колонки, реально нужные конвейеру (экономит память на больших данных);
+# platform нужен для федеративного партиционирования (Трек 2)
 USECOLS = ["user_id", "session_id", "timestamp", "step", "action_type",
-           "reference", "impressions", "prices"]
+           "reference", "platform", "impressions", "prices"]
 # индексы тех же колонок в исходном 12-колоночном train.csv (для чтения без заголовка)
-USECOLS_IDX = [0, 1, 2, 3, 4, 5, 10, 11]
+USECOLS_IDX = [0, 1, 2, 3, 4, 5, 6, 10, 11]
 
 
 def extract_slice(train_path: Path, skiprows: int = 0, nrows: int | None = None,
