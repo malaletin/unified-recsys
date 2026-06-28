@@ -1,0 +1,46 @@
+{
+  "title": "RecSys Service",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Запросы в секунду (по эндпоинтам)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {"expr": "sum(rate(recsys_requests_total[1m])) by (endpoint)", "legendFormat": "{{endpoint}}"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Латентность p95 (с)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum(rate(recsys_request_latency_seconds_bucket[5m])) by (le, endpoint))", "legendFormat": "{{endpoint}}"}
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Доля попаданий в кэш",
+      "gridPos": {"h": 8, "w": 6, "x": 0, "y": 8},
+      "fieldConfig": {"defaults": {"unit": "percentunit", "min": 0, "max": 1}},
+      "targets": [{"expr": "recsys_cache_hit_rate"}]
+    },
+    {
+      "type": "stat",
+      "title": "Выдач рекомендаций (всего)",
+      "gridPos": {"h": 8, "w": 6, "x": 6, "y": 8},
+      "targets": [{"expr": "recsys_recommendations_total"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Доля cold start",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [
+        {"expr": "rate(recsys_cold_start_total[5m]) / rate(recsys_recommendations_total[5m])", "legendFormat": "cold_start_rate"}
+      ]
+    }
+  ]
+}

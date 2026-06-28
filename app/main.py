@@ -42,6 +42,10 @@ app.include_router(events.router)
 app.include_router(consent.router)
 app.include_router(admin.router)
 
+# наблюдаемость (Prometheus /metrics) — no-op, если prometheus_client не установлен
+from app.observability import setup_observability  # noqa: E402
+setup_observability(app)
+
 
 @app.get("/")
 def root():

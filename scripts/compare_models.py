@@ -103,6 +103,13 @@ def main():
     (RESULTS / "track3_comparison.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2))
     print(f"\nСохранено: {RESULTS / 'track3_comparison.json'}  ({payload['runtime_sec']} c)")
 
+    # MLOps: логирование сравнения в MLflow (если MLOPS_TRACKING=1)
+    try:
+        from mlops.tracking import log_comparison
+        log_comparison(rows, artifacts=[str(RESULTS / "track3_comparison.json")])
+    except Exception as e:  # pragma: no cover
+        print(f"[mlflow] пропущено: {e}")
+
 
 if __name__ == "__main__":
     main()

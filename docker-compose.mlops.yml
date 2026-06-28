@@ -1,0 +1,60 @@
+# Расширение стека MLOps-сервисами: Redis (кэш), MLflow (трекинг),
+# Prometheus + Grafana (мониторинг). Запуск вместе с основным стеком:
+#   docker compose -f docker-compose.yml -f docker-compose.mlops.yml up --build
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: recsys_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.13.0
+    container_name: recsys_mlflow
+    command: >-
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --default-artifact-root /mlflow/artifacts
+    volumes:
+      - mlflow_data:/mlflow
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: recsys_prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: recsys_grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+    volumes:
+      - ./monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/recsys.json:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # API подключается к Redis и MLflow через переменные окружения
+  api:
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLOPS_TRACKING: "1"
+    depends_on:
+      - redis
+
+volumes:
+  mlflow_data:
+  grafana_data:
