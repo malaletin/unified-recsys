@@ -42,10 +42,15 @@ def run(name: str, params: dict | None = None):
         yield r
 
 
+def _safe_metric_name(k: str) -> str:
+    # MLflow допускает в именах метрик только [A-Za-z0-9_./ -]; '@' заменяем
+    return str(k).replace("@", "_at_")
+
+
 def log_metrics(metrics: dict):
     if _enabled():
-        mlflow.log_metrics({k: float(v) for k, v in metrics.items()
-                            if isinstance(v, (int, float))})
+        mlflow.log_metrics({_safe_metric_name(k): float(v) for k, v in metrics.items()
+                            if isinstance(v, (int, float)) and not isinstance(v, bool)})
 
 
 def log_artifact(path: str):
